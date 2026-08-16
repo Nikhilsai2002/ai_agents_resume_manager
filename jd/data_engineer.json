@@ -1,0 +1,22 @@
+{
+    "role": "Data Engineer",
+
+    "mandatory_skills": [
+        "Python",
+        "SQL",
+        "ETL"
+    ],
+
+    "good_to_have_skills": [
+        "Spark",
+        "Kafka",
+        "Databricks",
+        "Airflow",
+        "Azure",
+        "Docker",
+        "Git"
+    ],
+    "minimum_education": "Bachelor",
+    
+    "minimum_match": 70
+}

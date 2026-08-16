@@ -1,0 +1,24 @@
+{
+    "role": "Python Developer",
+
+    "mandatory_skills": [
+        "Python",
+        "OOP",
+        "SQL"
+    ],
+
+    "good_to_have_skills": [
+        "FastAPI",
+        "Flask",
+        "Django",
+        "REST API",
+        "Git",
+        "CI/CD",
+        "Cloud",
+        "Docker"
+    ],
+
+    "minimum_education": "Bachelor",
+
+    "minimum_match": 70
+}

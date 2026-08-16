@@ -1,0 +1,21 @@
+{
+    "role": "AI Engineer",
+
+    "mandatory_skills": [
+        "Python",
+        "Machine Learning",
+        "LLM"
+    ],
+
+    "good_to_have_skills": [
+        "FastAPI",
+        "LangChain",
+        "Docker",
+        "SQL",
+        "Generative AI",
+        "Git"
+    ],
+    "minimum_education": "Bachelor",
+
+    "minimum_match": 70
+}
