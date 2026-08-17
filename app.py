@@ -1,21 +1,18 @@
+import json
 import streamlit as st
- 
 
-from services.recommendation import (
-    get_recommendation
-)
 from extractor.pdf_reader import extract_pdf_text
 from extractor.docx_reader import extract_docx_text
 from extractor.txt_reader import extract_txt_text
 
- 
-from services.jd_matcher import (
-    load_jd,
-    compare_skills
+
+st.set_page_config(
+    page_title="Agentic ATS",
+    layout="wide"
 )
 
-st.title("AI Resume & Job Application Manager")
- 
+st.title("AI Resume & Job Application Manager (V2)")
+
 selected_role = st.selectbox(
     "Select Job Role",
     [
@@ -24,108 +21,113 @@ selected_role = st.selectbox(
         "Python Developer"
     ]
 )
- 
 
 uploaded_file = st.file_uploader(
     "Upload Resume",
     type=["pdf", "docx", "txt"]
 )
 
-if uploaded_file:
+submit = st.button(
+    "🚀 Analyze Resume",
+    type="primary"
+)
 
-    # Extract text based on file type
+if uploaded_file and submit:
+
+    # Extract Text
+
     if uploaded_file.name.endswith(".pdf"):
-        text = extract_pdf_text(uploaded_file)
+        resume_text = extract_pdf_text(uploaded_file)
 
     elif uploaded_file.name.endswith(".docx"):
-        text = extract_docx_text(uploaded_file)
+        resume_text = extract_docx_text(uploaded_file)
 
     else:
-        text = extract_txt_text(uploaded_file)
+        resume_text = extract_txt_text(uploaded_file)
 
-    # Parse resume
-    parsed_data = parse_resume_json(text)
+    st.success("Resume Text Extracted Successfully")
 
-    jd = load_jd(selected_role)
+    st.subheader("Resume Text")
 
-    matching_result = compare_skills(
-        parsed_data["skills"],
-        jd["mandatory_skills"],
-        jd["good_to_have_skills"]
+    st.text_area(
+        "Extracted Text",
+        resume_text,
+        height=300
     )
 
-    ats_score = matching_result["match_percentage"]
+    # Load JD
 
-    if ats_score >= 70:
-        recommendation = "✅ Eligible"
+    role_map = {
+        "AI Engineer":
+            "jd/ai_engineer.json",
 
-    elif ats_score >= 50:
-        recommendation = "⚠ Needs Review"
+        "Data Engineer":
+            "jd/data_engineer.json",
 
-    else:
-        recommendation = "❌ Not Eligible"
+        "Python Developer":
+            "jd/python_developer.json"
+    }
 
-    st.subheader("Resume Details")
-    st.write("### Name")
-    st.write(parsed_data["name"])
-    st.write("### Email")
-    st.write(parsed_data["email"])
+    with open(
+        role_map[selected_role],
+        "r"
+    ) as file:
 
-    st.write("### Phone")
-    st.write(parsed_data["phone"])
+        jd = json.load(file)
 
-    st.write("### Skills Found")
+    st.subheader("Selected JD")
 
-    for skill in parsed_data["skills"]:
-        st.write(f"✅ {skill}")
+    st.json(jd)
 
-    st.subheader("Skill Matching Report")
-
-    st.write(
-        f"Match Percentage: {matching_result['match_percentage']}%"
+    from services.agent_runner import (
+        run_resume_parser_sync,
+        run_ats_evaluator_sync
     )
 
-    st.write("### Mandatory Skills Matched")
+    with st.spinner("Parsing Resume..."):
 
-    for skill in matching_result["matched_mandatory"]:
-        st.write(f"✅ {skill}")
+        candidate_profile = (
+            run_resume_parser_sync(
+                resume_text
+            )
+        )
 
-    st.write("### Mandatory Skills Missing")
+    st.subheader("Candidate Profile")
 
-    for skill in matching_result["missing_mandatory"]:
-        st.write(f"❌ {skill}")
+    st.json(candidate_profile)
 
-    st.write("### Good To Have Skills Matched")
+    with st.spinner("Running ATS Evaluation..."):
 
-    for skill in matching_result["matched_good"]:
-        st.write(f"⭐ {skill}")
+        ats_result = (
+            run_ats_evaluator_sync(
+                candidate_profile,
+                jd
+            )
+        )
 
     st.subheader("ATS Evaluation")
 
     st.metric(
         "ATS Score",
-        f"{ats_score}/100"
+        ats_result["ats_score"]
     )
 
     st.write(
-        f"### Recommendation: {recommendation}"
+        f"### Recommendation: {ats_result['recommendation']}"
     )
 
-    st.subheader("Extracted Resume Text")
+    st.write("### Strengths")
 
-    st.text_area(
-        "",
-        text,
-        height=300
-    )
+    for item in ats_result["strengths"]:
+        st.success(item)
 
-    st.subheader("AI Agent Evaluation")
+    st.write("### Gaps")
+
+    for item in ats_result["gaps"]:
+        st.error(item)
+
+    st.write("### Summary")
 
     st.info(
-        """
-        Resume Parser Agent and ATS Evaluator Agent
-        are ready for integration.
-        
-        Current version uses rule-based ATS scoring.
-        """
+        ats_result["summary"]
     )
